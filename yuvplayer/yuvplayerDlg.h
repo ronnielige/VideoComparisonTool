@@ -51,7 +51,12 @@
 
 enum color_format { YUV420_10BE, YUV420_10LE, YUV444, YUV422, YUV420, UYVY, YUYV, YYY, PACKED_YUV444, NV12, NV21, RGB32, RGB24, RGB16 };
 enum segment_type { SEGMENT16x16 = 1, SEGMENT32x32 = 2, SEGMENT64x64 = 4};
-enum split_dir_type {VER = 0, HOR = 1};
+enum split_line_attr 
+{  
+    NOLINE = 0, // no split line
+    VER = 1,  // vertical split line
+    HOR = 2,  // horizontal split line
+};
 
 // CyuvplayerDlg dialog
 class CyuvplayerDlg : public CDialog
@@ -102,7 +107,8 @@ private:
 
 	int segment_option;
     int split_line_pos;
-    int split_line_dir;
+    int split_line_speed;
+    int split_line_attr;
 
 	float ratio;
 

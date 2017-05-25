@@ -70,14 +70,16 @@ CyuvplayerDlg::CyuvplayerDlg(CWnd* pParent /*=NULL*/)
 	ratio = 1.0;
 
 	segment_option = 0;
-    split_line_dir = VER;
+    //split_line_attr = NOLINE;
+    split_line_attr = VER;
     split_line_pos = 0;
+    split_line_speed = 3;
 
 	count = cur = 0;
 	started = FALSE;
 
 	filename = new wchar_t[MAX_PATH_LEN];
-	wsprintf(filename, L"%s", L"YUV player");
+	wsprintf(filename, L"%s", L"VideoComparisonTool");
 
 	OpenGLView = new COpenGLView;
 }
@@ -219,6 +221,7 @@ void CyuvplayerDlg::Resize(int width, int height)
 
 	this->width  = width;
 	this->height = height;
+    this->split_line_speed = width / 60;
 	for( t_width = 2  ; t_width  < width  ; t_width  *= 2 );
 	for( t_height = 2 ; t_height < height ; t_height *= 2 );
 
@@ -686,6 +689,7 @@ void CyuvplayerDlg::LoadFrame(void)
 	}
 
 	yuv2rgb();
+    DrawSplitLine();
 	OpenGLView->LoadTexture(rgba);
 
 	m_slider.SetPos(cur);
@@ -967,7 +971,7 @@ void CyuvplayerDlg::OnBnClickedFforward()
 void CyuvplayerDlg::StartTimer(void)
 {
 	KillTimer(1);	
-	SetTimer(1, (int)(1000.0/30), NULL);
+	SetTimer(1, (int)(1000.0/50), NULL);
 }
 
 void CyuvplayerDlg::StopTimer(void)
@@ -1565,6 +1569,50 @@ void CyuvplayerDlg::UpdateFilename(wchar_t* path)
 
 	wcsncpy( filename, path+start, end-start );
 	filename[end-start] = 0;
+}
+
+void CyuvplayerDlg::DrawSplitLine(void)
+{
+    unsigned char* prgb = rgba;
+    int new_pos = split_line_pos;
+    switch(split_line_attr)
+    {
+    case VER:
+        new_pos = split_line_pos + split_line_speed;
+        if(new_pos > 0 && new_pos <= width)
+        {
+            split_line_pos = new_pos;
+        }
+        else if(split_line_pos < t_width && new_pos > width)
+        {
+            split_line_pos = width;
+            split_line_speed = -split_line_speed;
+        }
+        else if(new_pos <= 0 && split_line_pos > 0)
+        {
+            split_line_pos = 0;
+            split_line_speed = -split_line_speed;
+        }
+        for(int j = 0; j < height; j++)
+        {
+            int offset = 1;
+            rgba[(j * t_width + split_line_pos) * 4] = 0;
+            rgba[(j * t_width + split_line_pos) * 4 + 1] = 0;
+            rgba[(j * t_width + split_line_pos) * 4 + 2] = 255;
+            rgba[(j * t_width + split_line_pos) * 4 + 3] = 255;
+            if(split_line_pos == width)
+                offset = -1;
+            rgba[(j * t_width + split_line_pos + offset) * 4] = 0;
+            rgba[(j * t_width + split_line_pos + offset) * 4 + 1] = 0;
+            rgba[(j * t_width + split_line_pos + offset) * 4 + 2] = 255;
+            rgba[(j * t_width + split_line_pos + offset) * 4 + 3] = 255;
+        }
+        break;
+    case HOR:
+        break;
+    default:
+        break;
+    }
 }
 
 void CyuvplayerDlg::DrawSegment(void)
